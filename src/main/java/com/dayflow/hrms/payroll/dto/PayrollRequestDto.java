@@ -1,6 +1,7 @@
 package com.dayflow.hrms.payroll.dto;
 
 import com.dayflow.hrms.payroll.model.PaymentStatus;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -8,11 +9,12 @@ import java.time.LocalDate;
 
 /**
  * Data Transfer Object for creating and updating Payroll/Salary records.
+ * Flexibly accepts employeeId as numeric Long (1L), numeric string ("1"), or employee code ("EMP001").
  */
 public class PayrollRequestDto {
 
-    @NotNull(message = "Employee ID is required")
     private Long employeeId;
+    private String employeeCode;
 
     @NotNull(message = "Basic salary is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Basic salary must be non-negative")
@@ -57,8 +59,32 @@ public class PayrollRequestDto {
         return employeeId;
     }
 
-    public void setEmployeeId(Long employeeId) {
-        this.employeeId = employeeId;
+    @JsonSetter("employeeId")
+    public void setEmployeeId(Object val) {
+        if (val == null) {
+            this.employeeId = null;
+            return;
+        }
+        if (val instanceof Number) {
+            this.employeeId = ((Number) val).longValue();
+        } else {
+            String str = val.toString().trim();
+            try {
+                this.employeeId = Long.parseLong(str);
+            } catch (NumberFormatException e) {
+                this.employeeCode = str;
+                this.employeeId = null;
+            }
+        }
+    }
+
+    public String getEmployeeCode() {
+        return employeeCode;
+    }
+
+    @JsonSetter("employeeCode")
+    public void setEmployeeCode(String employeeCode) {
+        this.employeeCode = employeeCode;
     }
 
     public BigDecimal getBasicSalary() {
