@@ -1,5 +1,6 @@
 package com.dayflow.hrms.ai.controller;
 
+import com.dayflow.hrms.ai.dto.AiHrInsightsDto;
 import com.dayflow.hrms.ai.dto.AiQueryRequestDto;
 import com.dayflow.hrms.ai.dto.AiQueryResponseDto;
 import com.dayflow.hrms.ai.service.AiAssistantService;
@@ -8,17 +9,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Placeholder controller for AI Assistant API endpoints.
- */
 @RestController
 @RequestMapping("/api/v1/ai")
-@Tag(name = "AI Assistant (Placeholder)", description = "Endpoints for conversational HR AI Assistant and query answering")
+@Tag(name = "HRMS AI Assistant & Insights", description = "Endpoints for employee AI HR query processing and HR/Admin organizational insights")
 public class AiAssistantController {
 
     private final AiAssistantService aiAssistantService;
@@ -28,9 +23,16 @@ public class AiAssistantController {
     }
 
     @PostMapping("/query")
-    @Operation(summary = "Query AI Assistant", description = "Sends query prompt to AI assistant placeholder")
-    public ResponseEntity<ApiResponse<AiQueryResponseDto>> queryAssistant(@Valid @RequestBody AiQueryRequestDto request) {
+    @Operation(summary = "Process natural language HR query for employee")
+    public ResponseEntity<ApiResponse<AiQueryResponseDto>> processQuery(@Valid @RequestBody AiQueryRequestDto request) {
         AiQueryResponseDto response = aiAssistantService.processQuery(request);
-        return ResponseEntity.ok(ApiResponse.ok("AI Assistant placeholder response", response));
+        return ResponseEntity.ok(ApiResponse.ok("Query processed successfully", response));
+    }
+
+    @GetMapping("/hr-insights")
+    @Operation(summary = "HR/Admin: Get AI-generated organizational insights")
+    public ResponseEntity<ApiResponse<AiHrInsightsDto>> getHrInsights() {
+        AiHrInsightsDto insights = aiAssistantService.getHrInsights();
+        return ResponseEntity.ok(ApiResponse.ok("HR insights generated successfully", insights));
     }
 }

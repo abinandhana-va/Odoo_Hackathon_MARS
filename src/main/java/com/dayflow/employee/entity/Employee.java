@@ -5,22 +5,9 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Employee — The core shared entity of the Dayflow HRMS.
- *
- * <p><b>Used by all modules:</b>
- * <ul>
- *   <li>Auth module       — authentication/registration</li>
- *   <li>Attendance module — tracks employee attendance via {@code employeeId}</li>
- *   <li>Leave module      — manages employee leave requests</li>
- *   <li>Payroll module    — processes payslips for employees</li>
- * </ul>
- *
- * <p><b>Import path for other modules:</b>
- * {@code import com.dayflow.employee.entity.Employee;}
- */
 @Entity
 @Table(
     name = "employees",
@@ -31,51 +18,88 @@ import java.time.LocalDateTime;
 )
 public class Employee {
 
-    /** Auto-generated primary key */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Human-readable employee identifier, e.g. "EMP001".
-     * Assigned at the time of registration.
-     */
     @Column(name = "employee_id", nullable = false, unique = true, length = 20)
     private String employeeId;
 
-    /** Full name of the employee */
     @Column(nullable = false, length = 100)
     private String name;
 
-    /** Unique corporate email address — used as the login credential */
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    /**
-     * Hashed password — will be encoded with BCrypt in the Auth module.
-     * Never expose this field in API responses (use EmployeeDto instead).
-     */
     @Column(nullable = false)
     private String password;
 
-    /** Role determines the access level across all modules */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
 
-    /** Record creation timestamp — managed automatically by Hibernate */
+    // Personal Info
+    @Column(length = 20)
+    private String mobile;
+
+    @Column(length = 255)
+    private String address;
+
+    @Column(name = "profile_picture", length = 500)
+    private String profilePicture;
+
+    // Job Info
+    @Column(length = 100)
+    private String company = "Dayflow Technologies";
+
+    @Column(length = 100)
+    private String department = "Engineering";
+
+    @Column(name = "job_position", length = 100)
+    private String jobPosition = "Software Engineer";
+
+    @Column(length = 100)
+    private String manager = "HR Manager";
+
+    @Column(length = 100)
+    private String location = "Headquarters";
+
+    @Column(name = "date_of_joining")
+    private LocalDate dateOfJoining = LocalDate.of(2024, 1, 15);
+
+    // Additional Info
+    @Column(length = 500)
+    private String skills = "Java, Spring Boot, PostgreSQL, REST APIs, HTML/CSS";
+
+    @Column(length = 500)
+    private String certifications = "AWS Certified Developer, Certified Scrum Master";
+
+    // Private Info
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth = LocalDate.of(1996, 5, 20);
+
+    @Column(name = "residential_address", length = 255)
+    private String residentialAddress;
+
+    @Column(length = 50)
+    private String nationality = "Indian";
+
+    @Column(name = "personal_email", length = 150)
+    private String personalEmail;
+
+    @Column(length = 20)
+    private String gender = "Male";
+
+    @Column(name = "marital_status", length = 20)
+    private String maritalStatus = "Single";
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    /** Record last-updated timestamp — managed automatically by Hibernate */
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // -------------------------------------------------------------------------
-    // Constructors
-    // -------------------------------------------------------------------------
 
     public Employee() {}
 
@@ -90,10 +114,6 @@ public class Employee {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
-    // -------------------------------------------------------------------------
-    // Builder
-    // -------------------------------------------------------------------------
 
     public static Builder builder() { return new Builder(); }
 
@@ -121,10 +141,6 @@ public class Employee {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Getters & Setters
-    // -------------------------------------------------------------------------
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -143,15 +159,60 @@ public class Employee {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
+    public String getMobile() { return mobile; }
+    public void setMobile(String mobile) { this.mobile = mobile; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getProfilePicture() { return profilePicture; }
+    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
+
+    public String getCompany() { return company; }
+    public void setCompany(String company) { this.company = company; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+
+    public String getJobPosition() { return jobPosition; }
+    public void setJobPosition(String jobPosition) { this.jobPosition = jobPosition; }
+
+    public String getManager() { return manager; }
+    public void setManager(String manager) { this.manager = manager; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public LocalDate getDateOfJoining() { return dateOfJoining; }
+    public void setDateOfJoining(LocalDate dateOfJoining) { this.dateOfJoining = dateOfJoining; }
+
+    public String getSkills() { return skills; }
+    public void setSkills(String skills) { this.skills = skills; }
+
+    public String getCertifications() { return certifications; }
+    public void setCertifications(String certifications) { this.certifications = certifications; }
+
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getResidentialAddress() { return residentialAddress; }
+    public void setResidentialAddress(String residentialAddress) { this.residentialAddress = residentialAddress; }
+
+    public String getNationality() { return nationality; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
+
+    public String getPersonalEmail() { return personalEmail; }
+    public void setPersonalEmail(String personalEmail) { this.personalEmail = personalEmail; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getMaritalStatus() { return maritalStatus; }
+    public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    @Override
-    public String toString() {
-        return "Employee{id=" + id + ", employeeId='" + employeeId + "', name='" + name +
-               "', email='" + email + "', role=" + role + "}";
-    }
 }

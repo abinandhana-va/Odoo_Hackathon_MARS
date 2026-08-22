@@ -10,6 +10,7 @@ import com.dayflow.hrms.ai.service.impl.AiAssistantServiceImpl;
 import com.dayflow.hrms.analytics.dto.LeaveAnalyticsDto;
 import com.dayflow.hrms.analytics.service.AnalyticsService;
 import com.dayflow.hrms.analytics.service.impl.AnalyticsServiceImpl;
+import com.dayflow.hrms.attendance.service.AttendanceService;
 import com.dayflow.hrms.common.exception.BadRequestException;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
@@ -23,6 +24,7 @@ import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.leave.service.impl.LeaveServiceImpl;
 import com.dayflow.hrms.notification.model.NotificationType;
 import com.dayflow.hrms.notification.service.NotificationService;
+import com.dayflow.hrms.payroll.service.PayrollService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,6 +57,12 @@ class FinalSprintWorkflowTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private AttendanceService attendanceService;
+
+    @Mock
+    private PayrollService payrollService;
+
     private LeaveService leaveService;
     private AnalyticsService analyticsService;
     private AiAssistantService aiAssistantService;
@@ -66,7 +74,7 @@ class FinalSprintWorkflowTest {
     void setUp() {
         leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, leaveBalanceRepository, notificationService);
         analyticsService = new AnalyticsServiceImpl(leaveRepository);
-        aiAssistantService = new AiAssistantServiceImpl(leaveService, employeeRepository);
+        aiAssistantService = new AiAssistantServiceImpl(leaveService, employeeRepository, attendanceService, payrollService);
 
         mockEmployee = new Employee(1L, "EMP001", "Robert Vance", "robert@dayflow.internal", "password", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
         mockBalance = new LeaveBalance(mockEmployee, 15, 10);
