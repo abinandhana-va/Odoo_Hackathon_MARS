@@ -1,5 +1,6 @@
 package com.dayflow.auth.controller;
 
+import com.dayflow.auth.dto.AuthResponse;
 import com.dayflow.auth.dto.LoginRequest;
 import com.dayflow.auth.dto.RegisterRequest;
 import com.dayflow.auth.service.AuthService;
@@ -12,19 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * AuthController — REST API for Authentication.
- *
- * <p><b>Base path:</b> /api/auth
+ * AuthController — REST API for Employee, HR, and Admin Authentication.
  *
  * <p><b>Endpoints:</b>
  * <pre>
- *   POST /api/auth/register — register a new employee
- *   POST /api/auth/login    — login and receive a token
+ *   POST /api/auth/register — register a new employee / admin / HR
+ *   POST /api/auth/login    — authenticate using email and password
  * </pre>
- *
- * <p><b>First-commit stub:</b>
- * Both endpoints accept and validate the request body but return placeholder
- * messages. JWT token generation will be added in the next commit.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -41,51 +36,32 @@ public class AuthController {
     /**
      * POST /api/auth/register
      *
-     * <p>Registers a new employee in the Dayflow system.
-     * Expects a JSON body matching {@link RegisterRequest}.
-     *
-     * <p><b>Request body example:</b>
-     * <pre>
-     * {
-     *   "name": "John Doe",
-     *   "email": "john.doe@company.com",
-     *   "password": "securePass123",
-     *   "role": "EMPLOYEE"
-     * }
-     * </pre>
+     * <p>Registers a new Employee, Admin, or HR user in Dayflow.
+     * Hashes password with BCrypt, enforces unique email and employee ID, and returns JWT.
      *
      * @param request the validated registration payload
-     * @return 201 Created with stub message (JWT response in future)
+     * @return 201 Created with AuthResponse (JWT + user info)
      */
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         log.info("POST /api/auth/register — email={}", request.getEmail());
-        String result = authService.register(request);
+        AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(result, "STUB"));
+                .body(ApiResponse.success("Registration successful", response));
     }
 
     /**
      * POST /api/auth/login
      *
-     * <p>Authenticates an employee with email and password.
-     * Expects a JSON body matching {@link LoginRequest}.
-     *
-     * <p><b>Request body example:</b>
-     * <pre>
-     * {
-     *   "email": "john.doe@company.com",
-     *   "password": "securePass123"
-     * }
-     * </pre>
+     * <p>Authenticates a user with email and password.
      *
      * @param request the validated login payload
-     * @return 200 OK with stub message (JWT token in future)
+     * @return 200 OK with AuthResponse (JWT + user info)
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         log.info("POST /api/auth/login — email={}", request.getEmail());
-        String result = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.success(result, "STUB"));
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 }

@@ -9,11 +9,12 @@ import jakarta.validation.constraints.Size;
 /**
  * RegisterRequest — Incoming payload for the POST /api/auth/register endpoint.
  *
- * <p>Used by HR/ADMIN to onboard a new employee.
- * Password encoding (BCrypt) and employee ID generation will be
- * implemented in a future commit.
+ * <p>Used to register a new Employee, HR, or Admin account.
  */
 public class RegisterRequest {
+
+    /** Optional custom employee identifier (e.g. "EMP001"). If omitted, auto-generated. */
+    private String employeeId;
 
     /** Full name of the new employee */
     @NotBlank(message = "Name is required")
@@ -30,7 +31,7 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
-    /** Role assigned to the new employee */
+    /** Role assigned to the new user (ADMIN, HR, EMPLOYEE) */
     @NotNull(message = "Role is required")
     private Role role;
 
@@ -47,9 +48,20 @@ public class RegisterRequest {
         this.role = role;
     }
 
+    public RegisterRequest(String employeeId, String name, String email, String password, Role role) {
+        this.employeeId = employeeId;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
     // -------------------------------------------------------------------------
     // Getters & Setters
     // -------------------------------------------------------------------------
+
+    public String getEmployeeId() { return employeeId; }
+    public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

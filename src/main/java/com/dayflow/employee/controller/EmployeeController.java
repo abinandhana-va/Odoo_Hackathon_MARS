@@ -2,11 +2,13 @@ package com.dayflow.employee.controller;
 
 import com.dayflow.common.response.ApiResponse;
 import com.dayflow.employee.dto.EmployeeDto;
+import com.dayflow.employee.entity.Employee;
 import com.dayflow.employee.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,16 +20,13 @@ import java.util.List;
  *
  * <p><b>Endpoints:</b>
  * <pre>
- *   GET    /api/employees          — list all employees
- *   GET    /api/employees/{id}     — get employee by id
+ *   GET    /api/employees/me       — get profile of currently logged-in user (authenticated)
+ *   GET    /api/employees          — list all employees (authenticated)
+ *   GET    /api/employees/{id}     — get employee by id (authenticated)
  *   POST   /api/employees          — create employee (stub)
  *   PUT    /api/employees/{id}     — update employee (stub)
  *   DELETE /api/employees/{id}     — delete employee
  * </pre>
- *
- * <p><b>Note for other module developers:</b>
- * If you need employee data in your module, inject {@link EmployeeService}
- * directly rather than calling these REST endpoints.
  */
 @RestController
 @RequestMapping("/api/employees")
@@ -39,6 +38,21 @@ public class EmployeeController {
 
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;
+    }
+
+    /**
+     * GET /api/employees/me
+     * Returns the profile of the currently logged-in user identified by JWT token.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<EmployeeDto>> getCurrentUser(@AuthenticationPrincipal Employee currentEmployee) {
+        if (currentEmployee == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User is not authenticated"));
+        }
+        log.debug("GET /api/employees/me — userId={}", currentEmployee.getId());
+        EmployeeDto dto = employeeService.toDto(currentEmployee);
+        return ResponseEntity.ok(ApiResponse.success("Current user profile retrieved", dto));
     }
 
     /**
@@ -68,12 +82,10 @@ public class EmployeeController {
     /**
      * POST /api/employees
      * Creates a new employee record.
-     * Full request body wiring will be added in the Auth module's register flow.
      */
     @PostMapping
     public ResponseEntity<ApiResponse<String>> createEmployee() {
         log.info("POST /api/employees — stub endpoint");
-        // TODO (future commit): Accept EmployeeCreateRequest body, call employeeService.createEmployee()
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         "Create employee endpoint is ready. Use POST /api/auth/register to create employees.",
@@ -88,7 +100,6 @@ public class EmployeeController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> updateEmployee(@PathVariable Long id) {
         log.info("PUT /api/employees/{} — stub endpoint", id);
-        // TODO (future commit): Accept EmployeeUpdateRequest body, call employeeService.updateEmployee()
         return ResponseEntity.ok(
                 ApiResponse.success("Update employee endpoint is ready — implementation coming soon.", "STUB")
         );
