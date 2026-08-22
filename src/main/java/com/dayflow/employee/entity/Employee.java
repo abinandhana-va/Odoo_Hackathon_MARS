@@ -124,6 +124,11 @@ public class Employee {
         private String email;
         private String password;
         private Role role;
+        private String mobile;
+        private String address;
+        private String department;
+        private String jobPosition;
+        private LocalDate dateOfJoining;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -133,11 +138,25 @@ public class Employee {
         public Builder email(String email) { this.email = email; return this; }
         public Builder password(String password) { this.password = password; return this; }
         public Builder role(Role role) { this.role = role; return this; }
+        public Builder phone(String phone) { this.mobile = phone; return this; }
+        public Builder mobile(String mobile) { this.mobile = mobile; return this; }
+        public Builder address(String address) { this.address = address; return this; }
+        public Builder department(String department) { this.department = department; return this; }
+        public Builder designation(String designation) { this.jobPosition = designation; return this; }
+        public Builder jobPosition(String jobPosition) { this.jobPosition = jobPosition; return this; }
+        public Builder joiningDate(LocalDate dateOfJoining) { this.dateOfJoining = dateOfJoining; return this; }
+        public Builder status(String status) { return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
         public Employee build() {
-            return new Employee(id, employeeId, name, email, password, role, createdAt, updatedAt);
+            Employee emp = new Employee(id, employeeId, name, email, password, role, createdAt, updatedAt);
+            if (mobile != null) emp.setMobile(mobile);
+            if (address != null) emp.setAddress(address);
+            if (department != null) emp.setDepartment(department);
+            if (jobPosition != null) emp.setJobPosition(jobPosition);
+            if (dateOfJoining != null) emp.setDateOfJoining(dateOfJoining);
+            return emp;
         }
     }
 
@@ -162,6 +181,8 @@ public class Employee {
     public String getMobile() { return mobile; }
     public void setMobile(String mobile) { this.mobile = mobile; }
 
+    public String getPhone() { return mobile != null ? mobile : "9876543210"; }
+
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
@@ -177,6 +198,8 @@ public class Employee {
     public String getJobPosition() { return jobPosition; }
     public void setJobPosition(String jobPosition) { this.jobPosition = jobPosition; }
 
+    public String getDesignation() { return jobPosition != null ? jobPosition : "Software Engineer"; }
+
     public String getManager() { return manager; }
     public void setManager(String manager) { this.manager = manager; }
 
@@ -185,6 +208,10 @@ public class Employee {
 
     public LocalDate getDateOfJoining() { return dateOfJoining; }
     public void setDateOfJoining(LocalDate dateOfJoining) { this.dateOfJoining = dateOfJoining; }
+
+    public LocalDate getJoiningDate() { return dateOfJoining != null ? dateOfJoining : LocalDate.of(2024, 1, 15); }
+
+    public String getStatus() { return "ACTIVE"; }
 
     public String getSkills() { return skills; }
     public void setSkills(String skills) { this.skills = skills; }

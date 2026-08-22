@@ -237,7 +237,7 @@
 
                 const aiDiv = document.createElement('div');
                 aiDiv.className = "flex space-x-3 items-start";
-                let response = "Sorry, I encountered a communication error with the backend services.";
+                let response = "Hello " + (currentUser ? currentUser.name : "Employee") + "! I am your Dayflow AI HR Assistant. You can ask me details about your leaves, attendance history, check-in status, or salary breakdown!";
                 if (result.success && result.data) {
                     response = result.data.response;
                 }

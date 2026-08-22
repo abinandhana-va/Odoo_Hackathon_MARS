@@ -5,6 +5,11 @@ import com.dayflow.auth.dto.RegisterRequest;
 import com.dayflow.common.enums.Role;
 import com.dayflow.employee.entity.Employee;
 import com.dayflow.employee.repository.EmployeeRepository;
+import com.dayflow.hrms.attendance.repository.AttendanceRepository;
+import com.dayflow.hrms.leave.repository.LeaveBalanceRepository;
+import com.dayflow.hrms.leave.repository.LeaveRepository;
+import com.dayflow.hrms.notification.repository.NotificationRepository;
+import com.dayflow.hrms.payroll.repository.PayrollRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,10 +46,30 @@ class AuthControllerTest {
     private EmployeeRepository employeeRepository;
 
     @Autowired
+    private LeaveBalanceRepository leaveBalanceRepository;
+
+    @Autowired
+    private LeaveRepository leaveRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private PayrollRepository payrollRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        notificationRepository.deleteAll();
+        leaveBalanceRepository.deleteAll();
+        leaveRepository.deleteAll();
+        attendanceRepository.deleteAll();
+        payrollRepository.deleteAll();
         employeeRepository.deleteAll();
     }
 
@@ -63,7 +88,6 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.employeeId", is("EMP001")))
                 .andExpect(jsonPath("$.data.role", is("EMPLOYEE")));
 
-        // Verify entity saved in DB with BCrypt hashed password
         Employee saved = employeeRepository.findByEmail("alice@dayflow.com").orElseThrow();
         assertEquals("Alice Smith", saved.getName());
         assertTrue(passwordEncoder.matches("password123", saved.getPassword()));
@@ -122,14 +146,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("Should successfully login with valid credentials")
     void testSuccessfulLogin() throws Exception {
-        // Register user first
         RegisterRequest regRequest = new RegisterRequest("EMP005", "David Miller", "david@dayflow.com", "securePass123", Role.ADMIN);
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(regRequest)))
                 .andExpect(status().isCreated());
 
-        // Perform login
         LoginRequest loginRequest = new LoginRequest("david@dayflow.com", "securePass123");
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -184,7 +206,6 @@ class AuthControllerTest {
         String responseBody = regResult.getResponse().getContentAsString();
         String token = objectMapper.readTree(responseBody).path("data").path("token").asText();
 
-        // Access protected endpoint with Bearer token
         mockMvc.perform(get("/api/employees/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())

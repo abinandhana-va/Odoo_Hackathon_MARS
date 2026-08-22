@@ -7,25 +7,49 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { background-color: #1e293b; }
-        .card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .stat-card { border-left: 4px solid #3b82f6; }
-        .stat-card-paid { border-left-color: #10b981; }
-        .stat-card-sick { border-left-color: #f59e0b; }
-        .stat-card-pending { border-left-color: #6366f1; }
-        .badge-PENDING { background-color: #f59e0b; color: #fff; }
-        .badge-APPROVED { background-color: #10b981; color: #fff; }
-        .badge-REJECTED { background-color: #ef4444; color: #fff; }
-        .notif-dropdown { width: 340px; max-height: 380px; overflow-y: auto; }
-        .notif-item.unread { background-color: #f0f9ff; font-weight: 600; }
+        :root {
+            --bg-warm: #fbfbf9;
+            --soft-mint: #e6f4ea;
+            --mint-dark: #059669;
+            --sage-green: #d1fae5;
+            --sage-dark: #047857;
+            --pastel-teal: #ccfbf1;
+            --teal-dark: #0f766e;
+            --powder-blue: #e0f2fe;
+            --blue-dark: #0369a1;
+            --warm-cream: #fef3c7;
+            --cream-dark: #d97706;
+            --soft-peach: #ffedd5;
+            --peach-dark: #ea580c;
+            --blush-pink: #fce7f3;
+            --pink-dark: #be185d;
+        }
+
+        body { background-color: var(--bg-warm); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #334155; }
+        .navbar { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .card { border-radius: 14px; border: 1px solid rgba(226, 232, 240, 0.7); box-shadow: 0 4px 14px rgba(0,0,0,0.03); background-color: #ffffff; }
+        
+        .stat-card-paid { background-color: var(--soft-mint); border-left: 5px solid var(--mint-dark); }
+        .stat-card-sick { background-color: var(--warm-cream); border-left: 5px solid var(--cream-dark); }
+        .stat-card-pending { background-color: var(--powder-blue); border-left: 5px solid var(--blue-dark); }
+        .stat-card-total { background-color: var(--pastel-teal); border-left: 5px solid var(--teal-dark); }
+
+        .badge-PENDING { background-color: var(--warm-cream); color: var(--cream-dark); border: 1px solid #fcd34d; font-weight: 700; }
+        .badge-APPROVED { background-color: var(--soft-mint); color: var(--mint-dark); border: 1px solid #a7f3d0; font-weight: 700; }
+        .badge-REJECTED { background-color: var(--blush-pink); color: var(--pink-dark); border: 1px solid #fbcfe8; font-weight: 700; }
+        
+        .btn-mint { background-color: var(--mint-dark); color: #ffffff; border-radius: 10px; font-weight: 600; border: none; }
+        .btn-mint:hover { background-color: #047857; color: #ffffff; }
+
+        .notif-dropdown { width: 340px; max-height: 380px; overflow-y: auto; border-radius: 14px; }
+        .notif-item.unread { background-color: var(--powder-blue); font-weight: 600; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 py-3">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-4">
-                <a class="navbar-brand fw-bold m-0" href="#">Dayflow HRMS</a>
+                <a class="navbar-brand fw-bold m-0 fs-4" href="#"><i class="bi bi-flower1"></i> Dayflow HRMS</a>
                 <div class="d-flex gap-3 text-white-50 small fw-bold">
                     <a class="text-white text-decoration-none" href="/static/employee-leave-history.html">Leaves</a>
                     <a class="text-white-50 text-decoration-none hover:text-white" href="/static/payroll-dashboard.html">Payroll</a>
@@ -35,7 +59,7 @@
             <div class="d-flex align-items-center gap-3">
                 <!-- Notification Bell Icon -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-light position-relative" type="button" id="notifDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifications()">
+                    <button class="btn btn-outline-light position-relative rounded-pill px-3" type="button" id="notifDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" onclick="loadNotifications()">
                         <i class="bi bi-bell-fill"></i>
                         <span id="unreadBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
                     </button>
@@ -49,7 +73,7 @@
                     </ul>
                 </div>
                 <span class="navbar-text text-light small">Employee Portal</span>
-                <button class="btn btn-sm btn-outline-danger" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
+                <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
             </div>
         </div>
     </nav>
@@ -58,30 +82,30 @@
         <!-- Leave Balance & Statistics Summary Cards -->
         <div class="row g-3 mb-4">
             <div class="col-md-3">
-                <div class="card p-3 stat-card stat-card-paid">
+                <div class="card p-3 stat-card-paid">
                     <div class="text-muted small fw-semibold">Paid Leave Balance</div>
-                    <div class="h3 fw-bold text-success m-0" id="paidBalanceVal">--</div>
+                    <div class="h3 fw-bold m-0" style="color: var(--mint-dark);" id="paidBalanceVal">--</div>
                     <small class="text-muted">Days Available</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card p-3 stat-card stat-card-sick">
+                <div class="card p-3 stat-card-sick">
                     <div class="text-muted small fw-semibold">Sick Leave Balance</div>
-                    <div class="h3 fw-bold text-warning m-0" id="sickBalanceVal">--</div>
+                    <div class="h3 fw-bold m-0" style="color: var(--cream-dark);" id="sickBalanceVal">--</div>
                     <small class="text-muted">Days Available</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card p-3 stat-card stat-card-pending">
+                <div class="card p-3 stat-card-pending">
                     <div class="text-muted small fw-semibold">Pending Requests</div>
-                    <div class="h3 fw-bold text-indigo m-0" id="pendingReqVal">--</div>
+                    <div class="h3 fw-bold m-0" style="color: var(--blue-dark);" id="pendingReqVal">--</div>
                     <small class="text-muted">Awaiting HR Decision</small>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card p-3 stat-card">
+                <div class="card p-3 stat-card-total">
                     <div class="text-muted small fw-semibold">Total Requests</div>
-                    <div class="h3 fw-bold text-primary m-0" id="totalReqVal">--</div>
+                    <div class="h3 fw-bold m-0" style="color: var(--teal-dark);" id="totalReqVal">--</div>
                     <small class="text-muted">Lifetime Applications</small>
                 </div>
             </div>
@@ -91,33 +115,33 @@
             <!-- Apply Leave Form -->
             <div class="col-lg-4">
                 <div class="card p-4">
-                    <h5 class="fw-bold mb-3 text-primary">Apply for Leave</h5>
+                    <h5 class="fw-bold mb-3" style="color: var(--teal-dark);"><i class="bi bi-calendar-plus"></i> Apply for Leave</h5>
                     <form id="applyLeaveForm">
                         <div class="mb-3">
-                            <label class="form-label">Employee ID</label>
-                            <input type="number" id="empId" class="form-control" value="1" onchange="refreshAll()" required>
+                            <label class="form-label small fw-bold">Employee ID</label>
+                            <input type="number" id="empId" class="form-control rounded-3" value="1" onchange="refreshAll()" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Leave Type</label>
-                            <select id="leaveType" class="form-select" required>
+                            <label class="form-label small fw-bold">Leave Type</label>
+                            <select id="leaveType" class="form-select rounded-3" required>
                                 <option value="PAID">PAID</option>
                                 <option value="SICK">SICK</option>
                                 <option value="UNPAID">UNPAID</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" id="startDate" class="form-control" required>
+                            <label class="form-label small fw-bold">Start Date</label>
+                            <input type="date" id="startDate" class="form-control rounded-3" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">End Date</label>
-                            <input type="date" id="endDate" class="form-control" required>
+                            <label class="form-label small fw-bold">End Date</label>
+                            <input type="date" id="endDate" class="form-control rounded-3" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Reason / Remarks</label>
-                            <textarea id="reason" class="form-control" rows="2" placeholder="e.g. Vacation trip"></textarea>
+                            <label class="form-label small fw-bold">Reason / Remarks</label>
+                            <textarea id="reason" class="form-control rounded-3" rows="2" placeholder="e.g. Family vacation"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Submit Application</button>
+                        <button type="submit" class="btn btn-mint w-100 py-2 shadow-sm">Submit Application</button>
                     </form>
                     <div id="alertBox" class="mt-3"></div>
                 </div>
@@ -127,8 +151,8 @@
             <div class="col-lg-8">
                 <div class="card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark m-0">My Leave Requests</h5>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshAll()">Refresh</button>
+                        <h5 class="fw-bold text-dark m-0"><i class="bi bi-clock-history"></i> My Leave Requests</h5>
+                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="refreshAll()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
@@ -198,7 +222,7 @@
                                 <td>${item.startDate}</td>
                                 <td>${item.endDate}</td>
                                 <td>${item.totalDays}</td>
-                                <td><span class="badge badge-${item.status} px-2 py-1">${item.status}</span></td>
+                                <td><span class="badge badge-${item.status} px-3 py-1 rounded-pill">${item.status}</span></td>
                                 <td><small class="text-muted">${item.adminComment || '-'}</small></td>
                             </tr>
                         `;
@@ -298,13 +322,13 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alertBox.innerHTML = '<div class="alert alert-success p-2">Leave request submitted (PENDING)!</div>';
+                    alertBox.innerHTML = '<div class="alert alert-success p-2 rounded-3">Leave request submitted (PENDING)!</div>';
                     refreshAll();
                 } else {
-                    alertBox.innerHTML = `<div class="alert alert-danger p-2">${data.message || 'Submission failed'}</div>`;
+                    alertBox.innerHTML = `<div class="alert alert-danger p-2 rounded-3">${data.message || 'Submission failed'}</div>`;
                 }
             } catch (err) {
-                alertBox.innerHTML = '<div class="alert alert-danger p-2">Error connecting to server.</div>';
+                alertBox.innerHTML = '<div class="alert alert-danger p-2 rounded-3">Error connecting to server.</div>';
             }
         });
 

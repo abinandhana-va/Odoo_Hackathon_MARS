@@ -24,6 +24,7 @@ import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.leave.service.impl.LeaveServiceImpl;
 import com.dayflow.hrms.notification.model.NotificationType;
 import com.dayflow.hrms.notification.service.NotificationService;
+import com.dayflow.hrms.payroll.repository.PayrollRepository;
 import com.dayflow.hrms.payroll.service.PayrollService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +62,9 @@ class FinalSprintWorkflowTest {
     private AttendanceService attendanceService;
 
     @Mock
+    private PayrollRepository payrollRepository;
+
+    @Mock
     private PayrollService payrollService;
 
     private LeaveService leaveService;
@@ -73,7 +77,7 @@ class FinalSprintWorkflowTest {
     @BeforeEach
     void setUp() {
         leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, leaveBalanceRepository, notificationService);
-        analyticsService = new AnalyticsServiceImpl(leaveRepository);
+        analyticsService = new AnalyticsServiceImpl(employeeRepository, payrollRepository, leaveRepository);
         aiAssistantService = new AiAssistantServiceImpl(leaveService, employeeRepository, attendanceService, payrollService);
 
         mockEmployee = new Employee(1L, "EMP001", "Robert Vance", "robert@dayflow.internal", "password", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
