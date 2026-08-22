@@ -1,6 +1,6 @@
 package com.dayflow.hrms.leave.model;
 
-import com.dayflow.hrms.employee.model.Employee;
+import com.dayflow.employee.entity.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -45,6 +45,15 @@ public class LeaveRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private LeaveStatus status = LeaveStatus.PENDING;
+
+    @Column(name = "admin_comment", length = 500)
+    private String adminComment;
+
+    @Column(name = "approved_by", length = 150)
+    private String approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -140,6 +149,30 @@ public class LeaveRequest {
 
     public void setStatus(LeaveStatus status) {
         this.status = status;
+    }
+
+    public String getAdminComment() {
+        return adminComment;
+    }
+
+    public void setAdminComment(String adminComment) {
+        this.adminComment = adminComment;
+    }
+
+    public String getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(String approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public LocalDateTime getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(LocalDateTime approvedAt) {
+        this.approvedAt = approvedAt;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - HR Leave Approval Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; }
+        .table-dark { background-color: #1e293b; }
+        .badge-PENDING { background-color: #f59e0b; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark border-bottom border-secondary mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-info" href="#">Dayflow HRMS</a>
+            <span class="navbar-text text-light">HR / Admin Approval Dashboard</span>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold text-white m-0">Pending Leave Requests</h4>
+                <button class="btn btn-outline-info btn-sm" onclick="loadPendingLeaves()">Refresh List</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>HR Remark</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingLeavesBody">
+                        <tr><td colspan="9" class="text-center text-muted">Loading pending leave requests...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="statusAlert"></div>
+    </div>
+
+    <script>
+        async function loadPendingLeaves() {
+            try {
+                const res = await fetch('/api/v1/leaves/pending');
+                const result = await res.json();
+                const tbody = document.getElementById('pendingLeavesBody');
+                tbody.innerHTML = '';
+
+                if (result.data && result.data.length > 0) {
+                    result.data.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>#${item.id}</td>
+                                <td><strong class="text-info">${item.employeeName || 'EMP#'+item.employeeId}</strong> (${item.employeeCode || '-'})</td>
+                                <td>${item.department || '-'}</td>
+                                <td><span class="badge bg-secondary">${item.leaveType}</span></td>
+                                <td><small>${item.startDate} to ${item.endDate}</small></td>
+                                <td>${item.totalDays}</td>
+                                <td><small>${item.reason || '-'}</small></td>
+                                <td><input type="text" id="remark_${item.id}" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Optional comment"></td>
+                                <td>
+                                    <button class="btn btn-success btn-sm me-1" onclick="processApproval(${item.id}, 'APPROVED')">Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick="processApproval(${item.id}, 'REJECTED')">Reject</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No pending leave requests found.</td></tr>';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function processApproval(id, status) {
+            const remark = document.getElementById(`remark_${id}`).value;
+            const statusAlert = document.getElementById('statusAlert');
+            try {
+                const res = await fetch(`/api/v1/leaves/${id}/approval`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status, adminComment: remark })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    statusAlert.innerHTML = `<div class="alert alert-success alert-dismissible">Leave #${id} updated to ${status}!</div>`;
+                    loadPendingLeaves();
+                } else {
+                    statusAlert.innerHTML = `<div class="alert alert-danger">${data.message || 'Operation failed'}</div>`;
+                }
+            } catch (err) {
+                statusAlert.innerHTML = '<div class="alert alert-danger">Failed to process request.</div>';
+            }
+        }
+
+        loadPendingLeaves();
+    </script>
+</body>
+</html>

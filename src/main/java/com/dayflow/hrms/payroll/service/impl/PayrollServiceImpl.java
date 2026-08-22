@@ -2,8 +2,8 @@ package com.dayflow.hrms.payroll.service.impl;
 
 import com.dayflow.hrms.common.exception.BadRequestException;
 import com.dayflow.hrms.common.exception.ResourceNotFoundException;
-import com.dayflow.hrms.employee.model.Employee;
-import com.dayflow.hrms.employee.repository.EmployeeRepository;
+import com.dayflow.employee.entity.Employee;
+import com.dayflow.employee.repository.EmployeeRepository;
 import com.dayflow.hrms.payroll.dto.PayrollRequestDto;
 import com.dayflow.hrms.payroll.dto.PayrollResponseDto;
 import com.dayflow.hrms.payroll.model.PaymentStatus;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,31 +32,33 @@ public class PayrollServiceImpl implements PayrollService {
     }
 
     @Override
+    public PayrollResponseDto createPayroll(PayrollRequestDto requestDto) {
+        return createOrUpdatePayroll(requestDto);
+    }
+
+    @Override
     public PayrollResponseDto createOrUpdatePayroll(PayrollRequestDto requestDto) {
+        if (requestDto == null) {
+            throw new BadRequestException("Payroll request cannot be empty");
+        }
+
         Employee employee = employeeRepository.findById(requestDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDto.getEmployeeId()));
 
-        Salary salary = payrollRepository.findByEmployeeIdAndPayPeriodMonthAndPayPeriodYear(
-                requestDto.getEmployeeId(), requestDto.getPayPeriodMonth(), requestDto.getPayPeriodYear())
-                .orElse(new Salary());
+        Optional<Salary> existingOpt = payrollRepository.findByEmployeeIdAndPayPeriodMonthAndPayPeriodYear(
+                requestDto.getEmployeeId(), requestDto.getPayPeriodMonth(), requestDto.getPayPeriodYear()
+        );
 
+        Salary salary = existingOpt.orElseGet(Salary::new);
         salary.setEmployee(employee);
         salary.setBasicSalary(requestDto.getBasicSalary());
-        salary.setAllowances(requestDto.getAllowances() != null ? requestDto.getAllowances() : BigDecimal.ZERO);
-        salary.setDeductions(requestDto.getDeductions() != null ? requestDto.getDeductions() : BigDecimal.ZERO);
-        salary.setNetSalary(calculateNetSalary(salary.getBasicSalary(), salary.getAllowances(), salary.getDeductions()));
+        salary.setAllowances(requestDto.getAllowances());
+        salary.setDeductions(requestDto.getDeductions());
         salary.setPayPeriodMonth(requestDto.getPayPeriodMonth());
         salary.setPayPeriodYear(requestDto.getPayPeriodYear());
-
-        if (requestDto.getPaymentStatus() != null) {
-            salary.setPaymentStatus(requestDto.getPaymentStatus());
-        }
-        if (requestDto.getPaymentDate() != null) {
-            salary.setPaymentDate(requestDto.getPaymentDate());
-        }
-        if (requestDto.getRemarks() != null) {
-            salary.setRemarks(requestDto.getRemarks());
-        }
+        salary.setRemarks(requestDto.getRemarks());
+        salary.setPaymentStatus(requestDto.getPaymentStatus() != null ? requestDto.getPaymentStatus() : PaymentStatus.PENDING);
+        salary.calculateNetSalary();
 
         Salary saved = payrollRepository.save(salary);
         return PayrollResponseDto.fromEntity(saved);
@@ -65,8 +68,14 @@ public class PayrollServiceImpl implements PayrollService {
     @Transactional(readOnly = true)
     public PayrollResponseDto getPayrollById(Long id) {
         Salary salary = payrollRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payroll record not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Salary record not found with id: " + id));
         return PayrollResponseDto.fromEntity(salary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PayrollResponseDto> getPayrollsByEmployeeId(Long employeeId) {
+        return getPayrollByEmployeeId(employeeId);
     }
 
     @Override
@@ -102,11 +111,13 @@ public class PayrollServiceImpl implements PayrollService {
     @Override
     public PayrollResponseDto updatePaymentStatus(Long id, PaymentStatus status) {
         Salary salary = payrollRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payroll record not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Salary record not found with id: " + id));
+
         salary.setPaymentStatus(status);
-        if (status == PaymentStatus.PAID && salary.getPaymentDate() == null) {
+        if (status == PaymentStatus.PAID) {
             salary.setPaymentDate(LocalDate.now());
         }
+
         Salary updated = payrollRepository.save(salary);
         return PayrollResponseDto.fromEntity(updated);
     }
@@ -114,7 +125,7 @@ public class PayrollServiceImpl implements PayrollService {
     @Override
     public void deletePayroll(Long id) {
         if (!payrollRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Payroll record not found with id: " + id);
+            throw new ResourceNotFoundException("Salary record not found with id: " + id);
         }
         payrollRepository.deleteById(id);
     }
@@ -123,7 +134,7 @@ public class PayrollServiceImpl implements PayrollService {
     public BigDecimal calculateNetSalary(BigDecimal basicSalary, BigDecimal allowances, BigDecimal deductions) {
         BigDecimal basic = basicSalary != null ? basicSalary : BigDecimal.ZERO;
         BigDecimal allow = allowances != null ? allowances : BigDecimal.ZERO;
-        BigDecimal ded = deductions != null ? deductions : BigDecimal.ZERO;
-        return basic.add(allow).subtract(ded);
+        BigDecimal deduct = deductions != null ? deductions : BigDecimal.ZERO;
+        return basic.add(allow).subtract(deduct);
     }
 }

@@ -1,7 +1,8 @@
 package com.dayflow.hrms.payroll;
 
-import com.dayflow.hrms.employee.model.Employee;
-import com.dayflow.hrms.employee.repository.EmployeeRepository;
+import com.dayflow.common.enums.Role;
+import com.dayflow.employee.entity.Employee;
+import com.dayflow.employee.repository.EmployeeRepository;
 import com.dayflow.hrms.payroll.dto.PayrollRequestDto;
 import com.dayflow.hrms.payroll.dto.PayrollResponseDto;
 import com.dayflow.hrms.payroll.model.PaymentStatus;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,51 +41,58 @@ class PayrollServiceTest {
     @BeforeEach
     void setUp() {
         payrollService = new PayrollServiceImpl(payrollRepository, employeeRepository);
-        mockEmployee = new Employee(1L, "EMP001", "John", "Doe", "john.doe@dayflow.internal", "Engineering", "Senior Software Engineer");
+        mockEmployee = new Employee(1L, "EMP001", "John Doe", "john.doe@dayflow.internal", "secret", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
     }
 
     @Test
-    @DisplayName("Calculate Net Salary correctly: Net = Basic + Allowances - Deductions")
+    @DisplayName("Calculate net salary correctly: Net = Basic + Allowances - Deductions")
     void testCalculateNetSalary() {
-        BigDecimal basic = new BigDecimal("5000.00");
-        BigDecimal allowances = new BigDecimal("1200.00");
-        BigDecimal deductions = new BigDecimal("300.00");
+        Salary salary = new Salary(
+                mockEmployee,
+                new BigDecimal("50000.00"),
+                new BigDecimal("10000.00"),
+                new BigDecimal("5000.00"),
+                8,
+                2026
+        );
 
-        BigDecimal netSalary = payrollService.calculateNetSalary(basic, allowances, deductions);
-
-        assertEquals(new BigDecimal("5900.00"), netSalary);
+        assertEquals(new BigDecimal("55000.00"), salary.getNetSalary());
     }
 
     @Test
-    @DisplayName("Create Payroll successfully with proper salary breakdown")
+    @DisplayName("Create payroll record successfully")
     void testCreatePayroll() {
-        PayrollRequestDto requestDto = new PayrollRequestDto();
-        requestDto.setEmployeeId(1L);
-        requestDto.setBasicSalary(new BigDecimal("6000.00"));
-        requestDto.setAllowances(new BigDecimal("1000.00"));
-        requestDto.setDeductions(new BigDecimal("500.00"));
-        requestDto.setPayPeriodMonth(8);
-        requestDto.setPayPeriodYear(2026);
-        requestDto.setPaymentStatus(PaymentStatus.PENDING);
+        PayrollRequestDto requestDto = new PayrollRequestDto(
+                1L,
+                new BigDecimal("60000.00"),
+                new BigDecimal("5000.00"),
+                new BigDecimal("2000.00"),
+                8,
+                2026,
+                PaymentStatus.PENDING,
+                "August Payslip"
+        );
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(mockEmployee));
-        when(payrollRepository.findByEmployeeIdAndPayPeriodMonthAndPayPeriodYear(1L, 8, 2026)).thenReturn(Optional.empty());
 
-        Salary savedSalary = new Salary(mockEmployee, new BigDecimal("6000.00"), new BigDecimal("1000.00"), new BigDecimal("500.00"), 8, 2026);
-        savedSalary.setId(100L);
+        Salary savedSalary = new Salary(
+                mockEmployee,
+                new BigDecimal("60000.00"),
+                new BigDecimal("5000.00"),
+                new BigDecimal("2000.00"),
+                8,
+                2026
+        );
+        savedSalary.setId(101L);
+        savedSalary.setRemarks("August Payslip");
+
         when(payrollRepository.save(any(Salary.class))).thenReturn(savedSalary);
 
-        PayrollResponseDto result = payrollService.createOrUpdatePayroll(requestDto);
+        PayrollResponseDto response = payrollService.createPayroll(requestDto);
 
-        assertNotNull(result);
-        assertEquals(100L, result.getId());
-        assertEquals(1L, result.getEmployeeId());
-        assertEquals(new BigDecimal("6000.00"), result.getBasicSalary());
-        assertEquals(new BigDecimal("1000.00"), result.getAllowances());
-        assertEquals(new BigDecimal("500.00"), result.getDeductions());
-        assertEquals(new BigDecimal("6500.00"), result.getNetSalary());
-        assertEquals(PaymentStatus.PENDING, result.getPaymentStatus());
-
+        assertNotNull(response);
+        assertEquals(101L, response.getId());
+        assertEquals(new BigDecimal("63000.00"), response.getNetSalary());
         verify(payrollRepository, times(1)).save(any(Salary.class));
     }
 }

@@ -7,22 +7,21 @@ import com.dayflow.hrms.leave.model.LeaveType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Output DTO representing a leave request entry.
- */
 public class LeaveResponseDto {
 
     private Long id;
     private Long employeeId;
     private String employeeCode;
     private String employeeName;
-    private String department;
     private LeaveType leaveType;
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer totalDays;
     private LeaveStatus status;
     private String reason;
+    private String adminComment;
+    private String approvedBy;
+    private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -34,9 +33,8 @@ public class LeaveResponseDto {
         dto.setId(leaveRequest.getId());
         if (leaveRequest.getEmployee() != null) {
             dto.setEmployeeId(leaveRequest.getEmployee().getId());
-            dto.setEmployeeCode(leaveRequest.getEmployee().getEmployeeCode());
-            dto.setEmployeeName(leaveRequest.getEmployee().getFirstName() + " " + leaveRequest.getEmployee().getLastName());
-            dto.setDepartment(leaveRequest.getEmployee().getDepartment());
+            dto.setEmployeeCode(leaveRequest.getEmployee().getEmployeeId());
+            dto.setEmployeeName(leaveRequest.getEmployee().getName());
         }
         dto.setLeaveType(leaveRequest.getLeaveType());
         dto.setStartDate(leaveRequest.getStartDate());
@@ -44,112 +42,56 @@ public class LeaveResponseDto {
         dto.setTotalDays(leaveRequest.getTotalDays());
         dto.setStatus(leaveRequest.getStatus());
         dto.setReason(leaveRequest.getReason());
+        dto.setAdminComment(leaveRequest.getAdminComment());
+        dto.setApprovedBy(leaveRequest.getApprovedBy());
+        dto.setApprovedAt(leaveRequest.getApprovedAt());
         dto.setCreatedAt(leaveRequest.getCreatedAt());
         dto.setUpdatedAt(leaveRequest.getUpdatedAt());
         return dto;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getEmployeeId() { return employeeId; }
+    public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
 
-    public Long getEmployeeId() {
-        return employeeId;
-    }
+    public String getEmployeeCode() { return employeeCode; }
+    public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
 
-    public void setEmployeeId(Long employeeId) {
-        this.employeeId = employeeId;
-    }
+    public String getEmployeeName() { return employeeName; }
+    public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
 
-    public String getEmployeeCode() {
-        return employeeCode;
-    }
+    public LeaveType getLeaveType() { return leaveType; }
+    public void setLeaveType(LeaveType leaveType) { this.leaveType = leaveType; }
 
-    public void setEmployeeCode(String employeeCode) {
-        this.employeeCode = employeeCode;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public String getEmployeeName() {
-        return employeeName;
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public void setEmployeeName(String employeeName) {
-        this.employeeName = employeeName;
-    }
+    public Integer getTotalDays() { return totalDays; }
+    public void setTotalDays(Integer totalDays) { this.totalDays = totalDays; }
 
-    public String getDepartment() {
-        return department;
-    }
+    public LeaveStatus getStatus() { return status; }
+    public void setStatus(LeaveStatus status) { this.status = status; }
 
-    public void setDepartment(String department) {
-        this.department = department;
-    }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 
-    public LeaveType getLeaveType() {
-        return leaveType;
-    }
+    public String getAdminComment() { return adminComment; }
+    public void setAdminComment(String adminComment) { this.adminComment = adminComment; }
 
-    public void setLeaveType(LeaveType leaveType) {
-        this.leaveType = leaveType;
-    }
+    public String getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(String approvedBy) { this.approvedBy = approvedBy; }
 
-    public LocalDate getStartDate() {
-        return startDate;
-    }
+    public LocalDateTime getApprovedAt() { return approvedAt; }
+    public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
 
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public Integer getTotalDays() {
-        return totalDays;
-    }
-
-    public void setTotalDays(Integer totalDays) {
-        this.totalDays = totalDays;
-    }
-
-    public LeaveStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(LeaveStatus status) {
-        this.status = status;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

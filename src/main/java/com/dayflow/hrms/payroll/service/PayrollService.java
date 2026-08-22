@@ -9,9 +9,13 @@ import java.util.List;
 
 public interface PayrollService {
 
+    PayrollResponseDto createPayroll(PayrollRequestDto requestDto);
+
     PayrollResponseDto createOrUpdatePayroll(PayrollRequestDto requestDto);
 
     PayrollResponseDto getPayrollById(Long id);
+
+    List<PayrollResponseDto> getPayrollsByEmployeeId(Long employeeId);
 
     List<PayrollResponseDto> getPayrollByEmployeeId(Long employeeId);
 

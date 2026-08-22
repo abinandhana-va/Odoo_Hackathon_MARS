@@ -8,14 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Repository("hrmsPayrollRepository")
 public interface PayrollRepository extends JpaRepository<Salary, Long> {
-    
     List<Salary> findByEmployeeId(Long employeeId);
-    
-    List<Salary> findByPayPeriodMonthAndPayPeriodYear(Integer month, Integer year);
-    
-    Optional<Salary> findByEmployeeIdAndPayPeriodMonthAndPayPeriodYear(Long employeeId, Integer month, Integer year);
-    
     List<Salary> findByPaymentStatus(PaymentStatus paymentStatus);
+    Optional<Salary> findByEmployeeIdAndPayPeriodMonthAndPayPeriodYear(Long employeeId, Integer payPeriodMonth, Integer payPeriodYear);
+    List<Salary> findByPayPeriodMonthAndPayPeriodYear(Integer payPeriodMonth, Integer payPeriodYear);
 }

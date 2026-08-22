@@ -42,6 +42,17 @@ public class PayrollRequestDto {
     public PayrollRequestDto() {
     }
 
+    public PayrollRequestDto(Long employeeId, BigDecimal basicSalary, BigDecimal allowances, BigDecimal deductions, Integer payPeriodMonth, Integer payPeriodYear, PaymentStatus paymentStatus, String remarks) {
+        this.employeeId = employeeId;
+        this.basicSalary = basicSalary;
+        this.allowances = allowances;
+        this.deductions = deductions;
+        this.payPeriodMonth = payPeriodMonth;
+        this.payPeriodYear = payPeriodYear;
+        this.paymentStatus = paymentStatus;
+        this.remarks = remarks;
+    }
+
     public Long getEmployeeId() {
         return employeeId;
     }

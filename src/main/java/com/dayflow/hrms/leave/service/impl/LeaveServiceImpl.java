@@ -2,9 +2,10 @@ package com.dayflow.hrms.leave.service.impl;
 
 import com.dayflow.hrms.common.exception.BadRequestException;
 import com.dayflow.hrms.common.exception.ResourceNotFoundException;
-import com.dayflow.hrms.employee.model.Employee;
-import com.dayflow.hrms.employee.repository.EmployeeRepository;
+import com.dayflow.employee.entity.Employee;
+import com.dayflow.employee.repository.EmployeeRepository;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
+import com.dayflow.hrms.leave.dto.LeaveApprovalRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
 import com.dayflow.hrms.leave.model.LeaveRequest;
 import com.dayflow.hrms.leave.model.LeaveStatus;
@@ -13,6 +14,7 @@ import com.dayflow.hrms.leave.service.LeaveService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -88,5 +90,36 @@ public class LeaveServiceImpl implements LeaveService {
                 .stream()
                 .map(LeaveResponseDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LeaveResponseDto> getPendingLeaveRequests() {
+        return leaveRepository.findByStatus(LeaveStatus.PENDING)
+                .stream()
+                .map(LeaveResponseDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public LeaveResponseDto approveOrRejectLeave(Long leaveId, LeaveApprovalRequestDto approvalDto, String approverEmail) {
+        if (approvalDto == null || approvalDto.getStatus() == null) {
+            throw new BadRequestException("Approval status (APPROVED or REJECTED) is required");
+        }
+
+        if (approvalDto.getStatus() != LeaveStatus.APPROVED && approvalDto.getStatus() != LeaveStatus.REJECTED) {
+            throw new BadRequestException("Status must be either APPROVED or REJECTED");
+        }
+
+        LeaveRequest leaveRequest = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new ResourceNotFoundException("Leave request not found with id: " + leaveId));
+
+        leaveRequest.setStatus(approvalDto.getStatus());
+        leaveRequest.setAdminComment(approvalDto.getAdminComment());
+        leaveRequest.setApprovedBy(approverEmail != null ? approverEmail : "HR_Admin");
+        leaveRequest.setApprovedAt(LocalDateTime.now());
+
+        LeaveRequest updated = leaveRepository.save(leaveRequest);
+        return LeaveResponseDto.fromEntity(updated);
     }
 }

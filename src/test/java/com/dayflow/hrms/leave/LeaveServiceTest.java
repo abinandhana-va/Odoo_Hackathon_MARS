@@ -1,9 +1,10 @@
 package com.dayflow.hrms.leave;
 
+import com.dayflow.common.enums.Role;
 import com.dayflow.hrms.common.exception.BadRequestException;
 import com.dayflow.hrms.common.exception.ResourceNotFoundException;
-import com.dayflow.hrms.employee.model.Employee;
-import com.dayflow.hrms.employee.repository.EmployeeRepository;
+import com.dayflow.employee.entity.Employee;
+import com.dayflow.employee.repository.EmployeeRepository;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
 import com.dayflow.hrms.leave.model.LeaveRequest;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,13 +40,12 @@ class LeaveServiceTest {
     private EmployeeRepository employeeRepository;
 
     private LeaveService leaveService;
-
     private Employee mockEmployee;
 
     @BeforeEach
     void setUp() {
         leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository);
-        mockEmployee = new Employee(1L, "EMP001", "John", "Doe", "john.doe@dayflow.internal", "Engineering", "Software Engineer");
+        mockEmployee = new Employee(1L, "EMP001", "John Doe", "john.doe@dayflow.internal", "secret", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
     }
 
     @Test
