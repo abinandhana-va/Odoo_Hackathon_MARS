@@ -1,6 +1,7 @@
 package com.dayflow.hrms.notification.model;
 
 public enum NotificationType {
+    LEAVE_SUBMITTED,
     LEAVE_APPROVED,
     LEAVE_REJECTED,
     LOW_LEAVE_BALANCE,

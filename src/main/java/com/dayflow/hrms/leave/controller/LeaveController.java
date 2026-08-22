@@ -6,6 +6,7 @@ import com.dayflow.hrms.leave.dto.LeaveApprovalRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
 import com.dayflow.hrms.leave.dto.LeaveSummaryDto;
 import com.dayflow.hrms.leave.model.LeaveBalance;
+import com.dayflow.hrms.leave.model.LeaveStatus;
 import com.dayflow.hrms.leave.service.LeaveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/leaves")
-@Tag(name = "HRMS Leave Management", description = "Endpoints for leave applications, HR approval workflows, balance tracking, and summary statistics")
+@Tag(name = "HRMS Leave Management", description = "Endpoints for leave applications, HR approval workflows, balance tracking, search filters, and summary statistics")
 public class LeaveController {
 
     private final LeaveService leaveService;
@@ -29,7 +30,7 @@ public class LeaveController {
     }
 
     @PostMapping("/apply")
-    @Operation(summary = "Employee submits a new leave application")
+    @Operation(summary = "Employee submits a new leave application with validation")
     public ResponseEntity<ApiResponse<LeaveResponseDto>> applyLeave(@Valid @RequestBody LeaveApplicationRequestDto requestDto) {
         LeaveResponseDto response = leaveService.applyLeave(requestDto);
         return new ResponseEntity<>(ApiResponse.ok("Leave request submitted successfully", response), HttpStatus.CREATED);
@@ -47,6 +48,15 @@ public class LeaveController {
     public ResponseEntity<ApiResponse<List<LeaveResponseDto>>> getPendingLeaveRequests() {
         List<LeaveResponseDto> pending = leaveService.getPendingLeaveRequests();
         return ResponseEntity.ok(ApiResponse.ok("Pending leave requests retrieved successfully", pending));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "HR/Admin: Search and filter leave requests by employee ID and status")
+    public ResponseEntity<ApiResponse<List<LeaveResponseDto>>> searchLeaveRequests(
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) LeaveStatus status) {
+        List<LeaveResponseDto> results = leaveService.searchLeaveRequests(employeeId, status);
+        return ResponseEntity.ok(ApiResponse.ok("Leave search results retrieved successfully", results));
     }
 
     @PutMapping("/{id}/approval")
@@ -67,7 +77,7 @@ public class LeaveController {
             @RequestParam(required = false) String adminComment,
             Principal principal) {
         String approverEmail = (principal != null) ? principal.getName() : "HR_Admin";
-        LeaveApprovalRequestDto approvalDto = new LeaveApprovalRequestDto(com.dayflow.hrms.leave.model.LeaveStatus.APPROVED, adminComment);
+        LeaveApprovalRequestDto approvalDto = new LeaveApprovalRequestDto(LeaveStatus.APPROVED, adminComment);
         LeaveResponseDto updated = leaveService.approveOrRejectLeave(id, approvalDto, approverEmail);
         return ResponseEntity.ok(ApiResponse.ok("Leave approved successfully", updated));
     }
@@ -79,7 +89,7 @@ public class LeaveController {
             @RequestParam(required = false) String adminComment,
             Principal principal) {
         String approverEmail = (principal != null) ? principal.getName() : "HR_Admin";
-        LeaveApprovalRequestDto approvalDto = new LeaveApprovalRequestDto(com.dayflow.hrms.leave.model.LeaveStatus.REJECTED, adminComment);
+        LeaveApprovalRequestDto approvalDto = new LeaveApprovalRequestDto(LeaveStatus.REJECTED, adminComment);
         LeaveResponseDto updated = leaveService.approveOrRejectLeave(id, approvalDto, approverEmail);
         return ResponseEntity.ok(ApiResponse.ok("Leave rejected successfully", updated));
     }

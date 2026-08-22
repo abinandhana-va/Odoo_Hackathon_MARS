@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +76,20 @@ public class LeaveServiceImpl implements LeaveService {
 
         int requestedDays = (int) ChronoUnit.DAYS.between(requestDto.getStartDate(), requestDto.getEndDate()) + 1;
 
-        // Check if balance is available
+        // 1. Overlapping leave validation
+        List<LeaveRequest> existingActiveRequests = leaveRepository.findByEmployeeIdAndStatusIn(
+                employee.getId(), Arrays.asList(LeaveStatus.PENDING, LeaveStatus.APPROVED)
+        );
+
+        for (LeaveRequest req : existingActiveRequests) {
+            boolean isOverlapping = !(requestDto.getEndDate().isBefore(req.getStartDate()) || requestDto.getStartDate().isAfter(req.getEndDate()));
+            if (isOverlapping) {
+                throw new BadRequestException("Overlapping leave request detected: You already have a " + req.getStatus()
+                        + " leave request from " + req.getStartDate() + " to " + req.getEndDate() + ".");
+            }
+        }
+
+        // 2. Balance validation
         LeaveBalance balance = getOrCreateLeaveBalance(employee.getId());
         if (requestDto.getLeaveType() == LeaveType.PAID && balance.getPaidLeaveBalance() < requestedDays) {
             throw new BadRequestException("Insufficient Paid Leave balance. Requested: " + requestedDays + ", Available: " + balance.getPaidLeaveBalance());
@@ -94,6 +108,12 @@ public class LeaveServiceImpl implements LeaveService {
         leaveRequest.setStatus(LeaveStatus.PENDING);
 
         LeaveRequest saved = leaveRepository.save(leaveRequest);
+
+        // Generate LEAVE_SUBMITTED notification
+        String submittedMsg = "Your " + saved.getLeaveType() + " leave request (#" + saved.getId() + ") for "
+                + saved.getStartDate() + " to " + saved.getEndDate() + " has been submitted and is pending HR approval.";
+        notificationService.createNotification(employee, submittedMsg, NotificationType.LEAVE_SUBMITTED);
+
         return LeaveResponseDto.fromEntity(saved);
     }
 
@@ -133,6 +153,22 @@ public class LeaveServiceImpl implements LeaveService {
                 .stream()
                 .map(LeaveResponseDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LeaveResponseDto> searchLeaveRequests(Long employeeId, LeaveStatus status) {
+        if (employeeId != null && status != null) {
+            return leaveRepository.findByEmployeeIdAndStatus(employeeId, status)
+                    .stream().map(LeaveResponseDto::fromEntity).collect(Collectors.toList());
+        } else if (employeeId != null) {
+            return getLeaveRequestsByEmployeeId(employeeId);
+        } else if (status != null) {
+            return leaveRepository.findByStatus(status)
+                    .stream().map(LeaveResponseDto::fromEntity).collect(Collectors.toList());
+        } else {
+            return getAllLeaveRequests();
+        }
     }
 
     @Override

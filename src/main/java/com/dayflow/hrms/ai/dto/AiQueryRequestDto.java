@@ -16,6 +16,10 @@ public class AiQueryRequestDto {
     public AiQueryRequestDto() {
     }
 
+    public AiQueryRequestDto(String prompt) {
+        this.prompt = prompt;
+    }
+
     public String getPrompt() {
         return prompt;
     }

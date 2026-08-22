@@ -7,12 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
+@Repository("hrmsLeaveRepository")
 public interface LeaveRepository extends JpaRepository<LeaveRequest, Long> {
-
     List<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(Long employeeId);
-
     List<LeaveRequest> findByEmployeeIdAndStatus(Long employeeId, LeaveStatus status);
-
+    List<LeaveRequest> findByEmployeeIdAndStatusIn(Long employeeId, List<LeaveStatus> statuses);
     List<LeaveRequest> findByStatus(LeaveStatus status);
 }
