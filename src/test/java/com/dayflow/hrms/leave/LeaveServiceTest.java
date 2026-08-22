@@ -1,15 +1,16 @@
 package com.dayflow.hrms.leave;
 
 import com.dayflow.common.enums.Role;
-import com.dayflow.hrms.common.exception.BadRequestException;
-import com.dayflow.hrms.common.exception.ResourceNotFoundException;
 import com.dayflow.employee.entity.Employee;
 import com.dayflow.employee.repository.EmployeeRepository;
+import com.dayflow.hrms.common.exception.BadRequestException;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
+import com.dayflow.hrms.leave.model.LeaveBalance;
 import com.dayflow.hrms.leave.model.LeaveRequest;
 import com.dayflow.hrms.leave.model.LeaveStatus;
 import com.dayflow.hrms.leave.model.LeaveType;
+import com.dayflow.hrms.leave.repository.LeaveBalanceRepository;
 import com.dayflow.hrms.leave.repository.LeaveRepository;
 import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.leave.service.impl.LeaveServiceImpl;
@@ -41,15 +42,20 @@ class LeaveServiceTest {
     private EmployeeRepository employeeRepository;
 
     @Mock
+    private LeaveBalanceRepository leaveBalanceRepository;
+
+    @Mock
     private NotificationService notificationService;
 
     private LeaveService leaveService;
     private Employee mockEmployee;
+    private LeaveBalance mockBalance;
 
     @BeforeEach
     void setUp() {
-        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, notificationService);
+        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, leaveBalanceRepository, notificationService);
         mockEmployee = new Employee(1L, "EMP001", "John Doe", "john.doe@dayflow.internal", "secret", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
+        mockBalance = new LeaveBalance(mockEmployee, 15, 10);
     }
 
     @Test
@@ -63,6 +69,7 @@ class LeaveServiceTest {
         );
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(mockEmployee));
+        when(leaveBalanceRepository.findByEmployeeId(1L)).thenReturn(Optional.of(mockBalance));
 
         LeaveRequest savedRequest = new LeaveRequest(mockEmployee, LeaveType.PAID, startDate, endDate, "Vacation trip");
         savedRequest.setId(10L);

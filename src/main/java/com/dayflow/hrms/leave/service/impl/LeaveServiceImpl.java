@@ -7,8 +7,12 @@ import com.dayflow.hrms.common.exception.ResourceNotFoundException;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveApprovalRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
+import com.dayflow.hrms.leave.dto.LeaveSummaryDto;
+import com.dayflow.hrms.leave.model.LeaveBalance;
 import com.dayflow.hrms.leave.model.LeaveRequest;
 import com.dayflow.hrms.leave.model.LeaveStatus;
+import com.dayflow.hrms.leave.model.LeaveType;
+import com.dayflow.hrms.leave.repository.LeaveBalanceRepository;
 import com.dayflow.hrms.leave.repository.LeaveRepository;
 import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.notification.model.NotificationType;
@@ -27,12 +31,29 @@ public class LeaveServiceImpl implements LeaveService {
 
     private final LeaveRepository leaveRepository;
     private final EmployeeRepository employeeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
     private final NotificationService notificationService;
 
-    public LeaveServiceImpl(LeaveRepository leaveRepository, EmployeeRepository employeeRepository, NotificationService notificationService) {
+    public LeaveServiceImpl(LeaveRepository leaveRepository,
+                            EmployeeRepository employeeRepository,
+                            LeaveBalanceRepository leaveBalanceRepository,
+                            NotificationService notificationService) {
         this.leaveRepository = leaveRepository;
         this.employeeRepository = employeeRepository;
+        this.leaveBalanceRepository = leaveBalanceRepository;
         this.notificationService = notificationService;
+    }
+
+    @Override
+    public LeaveBalance getOrCreateLeaveBalance(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+
+        return leaveBalanceRepository.findByEmployeeId(employeeId)
+                .orElseGet(() -> {
+                    LeaveBalance defaultBalance = new LeaveBalance(employee, 15, 10);
+                    return leaveBalanceRepository.save(defaultBalance);
+                });
     }
 
     @Override
@@ -52,14 +73,23 @@ public class LeaveServiceImpl implements LeaveService {
         Employee employee = employeeRepository.findById(requestDto.getEmployeeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDto.getEmployeeId()));
 
+        int requestedDays = (int) ChronoUnit.DAYS.between(requestDto.getStartDate(), requestDto.getEndDate()) + 1;
+
+        // Check if balance is available
+        LeaveBalance balance = getOrCreateLeaveBalance(employee.getId());
+        if (requestDto.getLeaveType() == LeaveType.PAID && balance.getPaidLeaveBalance() < requestedDays) {
+            throw new BadRequestException("Insufficient Paid Leave balance. Requested: " + requestedDays + ", Available: " + balance.getPaidLeaveBalance());
+        }
+        if (requestDto.getLeaveType() == LeaveType.SICK && balance.getSickLeaveBalance() < requestedDays) {
+            throw new BadRequestException("Insufficient Sick Leave balance. Requested: " + requestedDays + ", Available: " + balance.getSickLeaveBalance());
+        }
+
         LeaveRequest leaveRequest = new LeaveRequest();
         leaveRequest.setEmployee(employee);
         leaveRequest.setLeaveType(requestDto.getLeaveType());
         leaveRequest.setStartDate(requestDto.getStartDate());
         leaveRequest.setEndDate(requestDto.getEndDate());
-        
-        int calculatedDays = (int) ChronoUnit.DAYS.between(requestDto.getStartDate(), requestDto.getEndDate()) + 1;
-        leaveRequest.setTotalDays(calculatedDays);
+        leaveRequest.setTotalDays(requestedDays);
         leaveRequest.setReason(requestDto.getReason());
         leaveRequest.setStatus(LeaveStatus.PENDING);
 
@@ -118,6 +148,32 @@ public class LeaveServiceImpl implements LeaveService {
         LeaveRequest leaveRequest = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found with id: " + leaveId));
 
+        if (approvalDto.getStatus() == LeaveStatus.APPROVED) {
+            // Deduct leave balance
+            LeaveBalance balance = getOrCreateLeaveBalance(leaveRequest.getEmployee().getId());
+            if (leaveRequest.getLeaveType() == LeaveType.PAID) {
+                if (balance.getPaidLeaveBalance() < leaveRequest.getTotalDays()) {
+                    throw new BadRequestException("Cannot approve: Insufficient Paid Leave balance. Requested: "
+                            + leaveRequest.getTotalDays() + ", Available: " + balance.getPaidLeaveBalance());
+                }
+                balance.setPaidLeaveBalance(balance.getPaidLeaveBalance() - leaveRequest.getTotalDays());
+            } else if (leaveRequest.getLeaveType() == LeaveType.SICK) {
+                if (balance.getSickLeaveBalance() < leaveRequest.getTotalDays()) {
+                    throw new BadRequestException("Cannot approve: Insufficient Sick Leave balance. Requested: "
+                            + leaveRequest.getTotalDays() + ", Available: " + balance.getSickLeaveBalance());
+                }
+                balance.setSickLeaveBalance(balance.getSickLeaveBalance() - leaveRequest.getTotalDays());
+            }
+            leaveBalanceRepository.save(balance);
+
+            // Low leave balance notification alert (<= 2 days)
+            int remaining = (leaveRequest.getLeaveType() == LeaveType.PAID) ? balance.getPaidLeaveBalance() : balance.getSickLeaveBalance();
+            if (leaveRequest.getLeaveType() != LeaveType.UNPAID && remaining <= 2) {
+                String lowBalanceMsg = "Warning: Your remaining " + leaveRequest.getLeaveType() + " leave balance is low (" + remaining + " days remaining).";
+                notificationService.createNotification(leaveRequest.getEmployee(), lowBalanceMsg, NotificationType.LOW_LEAVE_BALANCE);
+            }
+        }
+
         leaveRequest.setStatus(approvalDto.getStatus());
         leaveRequest.setAdminComment(approvalDto.getAdminComment());
         leaveRequest.setApprovedBy(approverEmail != null ? approverEmail : "HR_Admin");
@@ -141,5 +197,31 @@ public class LeaveServiceImpl implements LeaveService {
         notificationService.createNotification(leaveRequest.getEmployee(), message, notifType);
 
         return LeaveResponseDto.fromEntity(updated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LeaveSummaryDto getLeaveSummaryByEmployeeId(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+
+        LeaveBalance balance = getOrCreateLeaveBalance(employeeId);
+        List<LeaveRequest> allRequests = leaveRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId);
+
+        long total = allRequests.size();
+        long pending = allRequests.stream().filter(r -> r.getStatus() == LeaveStatus.PENDING).count();
+        long approved = allRequests.stream().filter(r -> r.getStatus() == LeaveStatus.APPROVED).count();
+        long rejected = allRequests.stream().filter(r -> r.getStatus() == LeaveStatus.REJECTED).count();
+
+        return new LeaveSummaryDto(
+                employee.getId(),
+                employee.getName(),
+                balance.getPaidLeaveBalance(),
+                balance.getSickLeaveBalance(),
+                total,
+                pending,
+                approved,
+                rejected
+        );
     }
 }
