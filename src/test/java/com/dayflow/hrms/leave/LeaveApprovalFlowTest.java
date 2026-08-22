@@ -11,6 +11,8 @@ import com.dayflow.hrms.leave.model.LeaveType;
 import com.dayflow.hrms.leave.repository.LeaveRepository;
 import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.leave.service.impl.LeaveServiceImpl;
+import com.dayflow.hrms.notification.model.NotificationType;
+import com.dayflow.hrms.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,9 @@ class LeaveApprovalFlowTest {
     @Mock
     private EmployeeRepository employeeRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private LeaveService leaveService;
 
     private Employee mockEmployee;
@@ -44,7 +49,7 @@ class LeaveApprovalFlowTest {
 
     @BeforeEach
     void setUp() {
-        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository);
+        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, notificationService);
         mockEmployee = new Employee(1L, "EMP001", "Jane Smith", "jane.smith@dayflow.internal", "password", Role.HR, LocalDateTime.now(), LocalDateTime.now());
 
         mockPendingLeave = new LeaveRequest(mockEmployee, LeaveType.PAID, LocalDate.now(), LocalDate.now().plusDays(3), "Annual vacation");
@@ -54,7 +59,7 @@ class LeaveApprovalFlowTest {
     }
 
     @Test
-    @DisplayName("HR successfully approves pending leave request with admin comment")
+    @DisplayName("HR successfully approves pending leave request and triggers employee notification")
     void testHrApproveLeaveRequest() {
         when(leaveRepository.findById(100L)).thenReturn(Optional.of(mockPendingLeave));
         when(leaveRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -68,10 +73,11 @@ class LeaveApprovalFlowTest {
         assertEquals("hr.manager@dayflow.internal", result.getApprovedBy());
 
         verify(leaveRepository, times(1)).save(mockPendingLeave);
+        verify(notificationService, times(1)).createNotification(eq(mockEmployee), anyString(), eq(NotificationType.LEAVE_APPROVED));
     }
 
     @Test
-    @DisplayName("HR successfully rejects pending leave request with reason comment")
+    @DisplayName("HR successfully rejects pending leave request and triggers employee notification")
     void testHrRejectLeaveRequest() {
         when(leaveRepository.findById(100L)).thenReturn(Optional.of(mockPendingLeave));
         when(leaveRepository.save(any(LeaveRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -84,6 +90,7 @@ class LeaveApprovalFlowTest {
         assertEquals("Insufficient leave balance", result.getAdminComment());
 
         verify(leaveRepository, times(1)).save(mockPendingLeave);
+        verify(notificationService, times(1)).createNotification(eq(mockEmployee), anyString(), eq(NotificationType.LEAVE_REJECTED));
     }
 
     @Test

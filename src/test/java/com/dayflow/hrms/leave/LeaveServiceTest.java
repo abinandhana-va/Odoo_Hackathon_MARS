@@ -13,6 +13,7 @@ import com.dayflow.hrms.leave.model.LeaveType;
 import com.dayflow.hrms.leave.repository.LeaveRepository;
 import com.dayflow.hrms.leave.service.LeaveService;
 import com.dayflow.hrms.leave.service.impl.LeaveServiceImpl;
+import com.dayflow.hrms.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,12 +40,15 @@ class LeaveServiceTest {
     @Mock
     private EmployeeRepository employeeRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private LeaveService leaveService;
     private Employee mockEmployee;
 
     @BeforeEach
     void setUp() {
-        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository);
+        leaveService = new LeaveServiceImpl(leaveRepository, employeeRepository, notificationService);
         mockEmployee = new Employee(1L, "EMP001", "John Doe", "john.doe@dayflow.internal", "secret", Role.EMPLOYEE, LocalDateTime.now(), LocalDateTime.now());
     }
 

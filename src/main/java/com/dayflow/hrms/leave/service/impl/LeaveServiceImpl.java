@@ -1,9 +1,9 @@
 package com.dayflow.hrms.leave.service.impl;
 
-import com.dayflow.hrms.common.exception.BadRequestException;
-import com.dayflow.hrms.common.exception.ResourceNotFoundException;
 import com.dayflow.employee.entity.Employee;
 import com.dayflow.employee.repository.EmployeeRepository;
+import com.dayflow.hrms.common.exception.BadRequestException;
+import com.dayflow.hrms.common.exception.ResourceNotFoundException;
 import com.dayflow.hrms.leave.dto.LeaveApplicationRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveApprovalRequestDto;
 import com.dayflow.hrms.leave.dto.LeaveResponseDto;
@@ -11,6 +11,8 @@ import com.dayflow.hrms.leave.model.LeaveRequest;
 import com.dayflow.hrms.leave.model.LeaveStatus;
 import com.dayflow.hrms.leave.repository.LeaveRepository;
 import com.dayflow.hrms.leave.service.LeaveService;
+import com.dayflow.hrms.notification.model.NotificationType;
+import com.dayflow.hrms.notification.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +27,12 @@ public class LeaveServiceImpl implements LeaveService {
 
     private final LeaveRepository leaveRepository;
     private final EmployeeRepository employeeRepository;
+    private final NotificationService notificationService;
 
-    public LeaveServiceImpl(LeaveRepository leaveRepository, EmployeeRepository employeeRepository) {
+    public LeaveServiceImpl(LeaveRepository leaveRepository, EmployeeRepository employeeRepository, NotificationService notificationService) {
         this.leaveRepository = leaveRepository;
         this.employeeRepository = employeeRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -120,6 +124,22 @@ public class LeaveServiceImpl implements LeaveService {
         leaveRequest.setApprovedAt(LocalDateTime.now());
 
         LeaveRequest updated = leaveRepository.save(leaveRequest);
+
+        // Generate Notification for Employee
+        NotificationType notifType = (approvalDto.getStatus() == LeaveStatus.APPROVED)
+                ? NotificationType.LEAVE_APPROVED
+                : NotificationType.LEAVE_REJECTED;
+
+        String commentSuffix = (approvalDto.getAdminComment() != null && !approvalDto.getAdminComment().isBlank())
+                ? " HR Comment: " + approvalDto.getAdminComment()
+                : "";
+
+        String message = "Your " + leaveRequest.getLeaveType() + " leave request (#" + leaveRequest.getId() + ") for "
+                + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate()
+                + " has been " + approvalDto.getStatus().name() + "." + commentSuffix;
+
+        notificationService.createNotification(leaveRequest.getEmployee(), message, notifType);
+
         return LeaveResponseDto.fromEntity(updated);
     }
 }
