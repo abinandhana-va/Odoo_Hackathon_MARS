@@ -24,7 +24,14 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand fw-bold" href="#">Dayflow HRMS</a>
+            <div class="d-flex align-items-center gap-4">
+                <a class="navbar-brand fw-bold m-0" href="#">Dayflow HRMS</a>
+                <div class="d-flex gap-3 text-white-50 small fw-bold">
+                    <a class="text-white text-decoration-none" href="/static/employee-leave-history.html">Leaves</a>
+                    <a class="text-white-50 text-decoration-none hover:text-white" href="/static/payroll-dashboard.html">Payroll</a>
+                    <a class="text-white-50 text-decoration-none hover:text-white" href="/static/ai-assistant.html">AI Assistant</a>
+                </div>
+            </div>
             <div class="d-flex align-items-center gap-3">
                 <!-- Notification Bell Icon -->
                 <div class="dropdown">
@@ -42,6 +49,7 @@
                     </ul>
                 </div>
                 <span class="navbar-text text-light small">Employee Portal</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
             </div>
         </div>
     </nav>
@@ -299,6 +307,11 @@
                 alertBox.innerHTML = '<div class="alert alert-danger p-2">Error connecting to server.</div>';
             }
         });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/static/index.html';
+        }
 
         refreshAll();
     </script>
